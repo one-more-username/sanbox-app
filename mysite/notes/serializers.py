@@ -4,24 +4,33 @@ from .models import Note
 
 
 class NoteSerializer(serializers.ModelSerializer):
+    owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    is_done = serializers.BooleanField(read_only=True)
     class Meta:
         model = Note
         fields = "__all__"
         # fields = ('text', 'is_done', 'time', 'priority', 'id')
 
-    # text = serializers.CharField(max_length=255)
-    # is_done = serializers.BooleanField(help_text='temp text')
-    # time = serializers.TimeField()
-    # priority = serializers.IntegerField()
-    #
-    # def create(self, validated_data):
-    #     return Note.objects.create(**validated_data)
-    #
     # def update(self, instance, validated_data):
-    #     instance.text = validated_data.get('text', instance.text)
-    #     instance.is_done = validated_data.get('is_done', instance.is_done)
-    #     instance.time = validated_data.get('time', instance.time)
-    #     instance.priority = validated_data.get('priority', instance.priority)
-    #     instance.save()
-    #
-    #     return instance
+    #     note = Note.objects.get(pk=instance.id)
+    #     Note.objects.filter(pk=instance.id).update(**validated_data)
+    #     return note
+    # def update(self, instance, validated_data):
+
+        # return
+
+    def save(self, **kwargs):
+        validated_data = {**self.validated_data, **kwargs}
+
+        if self.instance is not None:
+            self.instance = self.update(self.instance, validated_data)
+            assert self.instance is not None, (
+                '`update()` did not return an object instance.'
+            )
+        else:
+            self.instance = self.create(validated_data)
+            assert self.instance is not None, (
+                '`create()` did not return an object instance.'
+            )
+
+        return self.instance
