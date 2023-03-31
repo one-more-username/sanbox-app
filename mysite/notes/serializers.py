@@ -9,7 +9,6 @@ class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
         fields = "__all__"
-        # fields = ('text', 'is_done', 'time', 'priority', 'id')
 
     # def update(self, instance, validated_data):
     #     note = Note.objects.get(pk=instance.id)

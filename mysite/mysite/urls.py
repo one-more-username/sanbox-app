@@ -20,14 +20,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from rest_framework import routers
 
-# from notes.api import NoteAPIList, NoteAPIUpdate, NoteAPIDestroy
-
 router = routers.SimpleRouter()
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include("notes.urls")),         #   http://127.0.0.1:8000/api/v1/notes/
-    # path('api/v1/', include("auth_user.urls")),     #   http://127.0.0.1:8000/api/v1/auth_user/
     #
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
