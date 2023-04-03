@@ -1,12 +1,12 @@
-from rest_framework import viewsets, generics
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, AllowAny, IsAuthenticated
-from rest_framework.request import Request
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from .models import Note
-from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly, DoesntDone
-from .serializers import NoteSerializer
+from .permissions import DoesntDone
+from .serializers import NoteSerializer, FilterSerializer
 
 
 # Create your views here.
@@ -16,9 +16,11 @@ class NoteViewSet(viewsets.ModelViewSet):
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, DoesntDone,)
-    separator = ','
+    filter_backends = [DjangoFilterBackend]
+    # filterset_fields = ['text']
 
     # TODO action with params for filtration. Params in body of request. New serializer for this action(for body)
+    # __str__ __repr__ __len__ __add__ mustread
 
     # def get_queryset(self):
     #     """
@@ -34,27 +36,37 @@ class NoteViewSet(viewsets.ModelViewSet):
     #
     #     return super().get_queryset()
 
-    @action(methods=['get'], detail=False, url_path='owner')
-    def filter_by_owner(self, request, *args, **kwargs):
+    # def filter_queryset(self, queryset):
+
+    @action(methods=['post'], detail=False, url_path='filtered')
+    def filtered(self, request, *args, **kwargs):
         owner = request.user.id
 
-        # print(self.request.user)
-        # print(request.user.id)
+        serializer_class = FilterSerializer(data=request.data)
 
-        notes = Note.objects.filter(owner=owner)
+        if not serializer_class.is_valid(raise_exception=True):
+            print(serializer_class.errors)
+        else:
+            print('validated data', serializer_class.validated_data)
 
+        # print(serializer_class.is_valid())  # true if exist fields 'is_done', 'time', 'priority'
+
+        notes = Note.objects.filter(owner_id=owner)
+
+        # valid_notes = serializer_class.validated_data
+
+        vd: dict = serializer_class.validated_data    # OrderedDict
+
+        for key, value in vd.items():
+            if key == 'is_done':
+                notes = notes.filter(is_done=value)
+            elif key == 'time':
+                notes = notes.filter(time__gte=value)
+            elif key == 'priority':
+                notes = notes.filter(priority__gte=value)
+        # url?param1=value,value2
+        # url?param1=value&param1=value2
         return Response(self.get_serializer(notes, many=True).data)
-
-    # @action(methods=['get'], detail=False, url_path='filtered')
-    # def filter_by_params(self, request, *args, **kwargs):
-    #     owner = request.user.id
-    #
-    #     # print(self.request.user)
-    #     # print(request.user.id)
-    #
-    #     notes = Note.objects.filter(owner=owner)
-    #
-    #     return Response(self.get_serializer(notes, many=True).data)
 
     @action(methods=['post'], detail=True, url_path='done')
     def set_done(self, request, *args, **kwargs):
@@ -78,6 +90,3 @@ class NoteViewSet(viewsets.ModelViewSet):
         notes = Note.objects.all()
 
         return Response(self.get_serializer(notes, many=True).data)
-
-    # def perform_update(self, serializer):
-    #     serializer.save()

@@ -10,26 +10,10 @@ class NoteSerializer(serializers.ModelSerializer):
         model = Note
         fields = "__all__"
 
-    # def update(self, instance, validated_data):
-    #     note = Note.objects.get(pk=instance.id)
-    #     Note.objects.filter(pk=instance.id).update(**validated_data)
-    #     return note
-    # def update(self, instance, validated_data):
-
-        # return
-
-    def save(self, **kwargs):
-        validated_data = {**self.validated_data, **kwargs}
-
-        if self.instance is not None:
-            self.instance = self.update(self.instance, validated_data)
-            assert self.instance is not None, (
-                '`update()` did not return an object instance.'
-            )
-        else:
-            self.instance = self.create(validated_data)
-            assert self.instance is not None, (
-                '`create()` did not return an object instance.'
-            )
-
-        return self.instance
+class FilterSerializer(serializers.Serializer):
+    is_done = serializers.BooleanField(required=False)
+    time = serializers.TimeField(required=False)
+    priority = serializers.IntegerField(required=False)
+    # class Meta:
+        # fields = ['text', 'time', 'priority']
+        # fields = "__all__"

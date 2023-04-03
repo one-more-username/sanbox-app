@@ -6,7 +6,6 @@ User = get_user_model()
 
 
 class Note(models.Model):
-    # main filter by owner DONE
     text = models.TextField(max_length=255)
     is_done = models.BooleanField(help_text='temp text', default=False)  # filter by bool true/false
     time = models.TimeField(default=timezone.now)  # filter all notes after TIME from parameter
