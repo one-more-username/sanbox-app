@@ -14,6 +14,3 @@ class FilterSerializer(serializers.Serializer):
     is_done = serializers.BooleanField(required=False)
     time = serializers.TimeField(required=False)
     priority = serializers.IntegerField(required=False)
-    # class Meta:
-        # fields = ['text', 'time', 'priority']
-        # fields = "__all__"
