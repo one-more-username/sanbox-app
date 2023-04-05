@@ -1,3 +1,4 @@
+from django.template.context_processors import request
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiExample, inline_serializer, OpenApiParameter
@@ -20,68 +21,85 @@ class NoteViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
     # permission_classes = (IsAuthenticatedOrReadOnly, DoesntDone,)
 
-    # TODO action with params for filtration.
+    # files for .gitignore?????
     # __str__ __repr__ __len__ __add__ mustread #   https://nuancesprog.ru/p/10529/
 
     @extend_schema(
-        # override default docstring extraction
         description='More descriptive text',
-        # extra parameters added to the schema
+        summary='Filtration according parameters from url',
+        tags=['filtration'],
+        request=None,
+        responses={200: NoteSerializer},
+        external_docs={'url': 'detail', 'description': 'Some description about url'},
+        # external_docs='detail',
         parameters=[
-            OpenApiParameter(name='Is done', description='Filter by completeness', required=False, type=bool),
             OpenApiParameter(
-                name='Priority',
-                description='Filter by priority',
-                required=False,
-                type=int,
-                # location=OpenApiParameter.QUERY,
-                # examples=[
-                #     OpenApiExample(
-                #         'Example 1',
-                #         summary='short optional summary',
-                #         description='longer description',
-                #         value='1993-08-23'
-                #     ),
-                # ],
+                name="is_done",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False
             ),
-            OpenApiParameter(name='Time', description='Filter by time', required=False, type=OpenApiTypes.TIME),
-        ],
-        # # provide Authentication class that deviates from the views default
-        # auth=None,
-        # # change the auto-generated operation name
-        # operation_id=None,
-        # # or even completely override what AutoSchema would generate. Provide raw Open API spec as Dict.
-        # operation=None,
-        # attach request/response examples to the operation.
-        examples=[
-            OpenApiExample(
-                'Example 1',
-                description='longer description',
-                value={}
-            ),
-            OpenApiExample(
-                'Example 2',
-                # description='22longer description',
-                value={
-                    'is_done': 'value',
-                    'time': 'value',
-                    'priority': 'value'
-                }
-            ),
+            OpenApiParameter(
+                name="time",
+                type=OpenApiTypes.TIME,
+                location=OpenApiParameter.QUERY,
+                required=False),
+            OpenApiParameter(
+                name="priority",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False),
         ],
     )
-    @action(methods=['post'], detail=False, url_path='filtered')
-    def filtered(self, request, *args, **kwargs):
+    @action(methods=['post'], detail=False, url_path='filter-by-url')
+    def filter_by_url(self, request, *args, **kwargs):
         owner = request.user.id
+        notes = Note.objects.filter(owner_id=owner)
 
         serializer_class = FilterSerializer(data=request.data)
 
         if not serializer_class.is_valid(raise_exception=True):
-            print(serializer_class.errors)
+            print('ERROR', serializer_class.errors)
         else:
-            print('validated data', serializer_class.validated_data)
+            print('VALIDATED DATA', serializer_class.validated_data)
 
+        params = request.query_params
+
+        s_params = FilterSerializer(data=params)
+
+        if s_params.is_valid(raise_exception=True):
+            is_done = s_params['is_done'].value
+            time = s_params['time'].value
+            priority = s_params['priority'].value
+
+            if time is not None:
+                notes = notes.filter(time__gte=time)
+            elif priority is not None:
+                notes = notes.filter(priority__gte=priority)
+            elif is_done is not None:
+                notes = notes.filter(is_done=is_done)
+
+        return Response(self.get_serializer(notes, many=True).data)
+
+    @extend_schema(
+        description='More descriptive text',
+        summary='Filtration according parameters from request.body',
+        tags=['filtration'],
+        request=FilterSerializer,
+        responses={200: NoteSerializer},
+        external_docs={'url': 'detail', 'description': 'Some description about url'},
+    )
+    @action(methods=['post'], detail=False, url_path='filter-by-body')
+    def filter_by_body(self, request, *args, **kwargs):
+        owner = request.user.id
         notes = Note.objects.filter(owner_id=owner)
+
+        serializer_class = FilterSerializer(data=request.data)
+
+        if not serializer_class.is_valid(raise_exception=True):
+            print('ERROR', serializer_class.errors)
+        else:
+            print('VALIDATED DATA', serializer_class.validated_data)
 
         vd: dict = serializer_class.validated_data  # OrderedDict
 
@@ -94,40 +112,6 @@ class NoteViewSet(viewsets.ModelViewSet):
                 notes = notes.filter(priority__gte=value)
 
         return Response(self.get_serializer(notes, many=True).data)
-
-    # @extend_schema(
-    #     parameters=[
-    #         QuerySerializer,  # serializer fields are converted to parameters
-    #         OpenApiParameter("nested", QuerySerializer),  # serializer object is converted to a parameter
-    #         OpenApiParameter("queryparam1", OpenApiTypes.UUID, OpenApiParameter.QUERY),
-    #         OpenApiParameter("pk", OpenApiTypes.UUID, OpenApiParameter.PATH),  # path variable was overridden
-    #     ],
-    #     request=YourRequestSerializer,
-    #     responses=YourResponseSerializer,
-    #     # more customizations
-    # )
-
-    def get_queryset(self):
-        """
-        Optionally restricts the returned notes to a given user,
-        by filtering against a `priority` query parameter in the URL.
-        """
-        params = self.request.query_params
-        queryset = Note.objects.all()
-
-        is_done = params.get('is_done')
-        time = params.get('time')
-        priority = params.get('priority')
-
-        #   http://127.0.0.1:8000/api/v1/note/?is_done=_&priority=_&time=_
-
-        if is_done is not (False or None):
-            queryset = queryset.filter(is_done=is_done)
-        elif priority is not None:
-            queryset = queryset.filter(priority__gte=priority)
-        elif time is not None:
-            queryset = queryset.filter(time__gte=time)
-        return queryset
 
     @action(methods=['post'], detail=True, url_path='done')
     def set_done(self, request, *args, **kwargs):
