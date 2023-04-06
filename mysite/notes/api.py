@@ -1,7 +1,5 @@
-from django.template.context_processors import request
-from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiExample, inline_serializer, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -19,9 +17,9 @@ class NoteViewSet(viewsets.ModelViewSet):
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
+
     # permission_classes = (IsAuthenticatedOrReadOnly, DoesntDone,)
 
-    # files for .gitignore?????
     # __str__ __repr__ __len__ __add__ mustread #   https://nuancesprog.ru/p/10529/
 
     @extend_schema(
@@ -64,20 +62,20 @@ class NoteViewSet(viewsets.ModelViewSet):
             print('VALIDATED DATA', serializer_class.validated_data)
 
         params = request.query_params
-
         s_params = FilterSerializer(data=params)
 
         if s_params.is_valid(raise_exception=True):
-            is_done = s_params['is_done'].value
-            time = s_params['time'].value
-            priority = s_params['priority'].value
 
-            if time is not None:
+            is_done = s_params.validated_data['is_done']
+            time = s_params.validated_data['time']
+            priority = s_params.validated_data['priority']
+
+            if is_done is not None:
+                notes = notes.filter(is_done=is_done)
+            elif time is not None:
                 notes = notes.filter(time__gte=time)
             elif priority is not None:
                 notes = notes.filter(priority__gte=priority)
-            elif is_done is not None:
-                notes = notes.filter(is_done=is_done)
 
         return Response(self.get_serializer(notes, many=True).data)
 
