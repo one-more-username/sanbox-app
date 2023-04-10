@@ -20,7 +20,7 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     # permission_classes = (IsAuthenticatedOrReadOnly, DoesntDone,)
 
-    # __str__ __repr__ __len__ __add__ mustread #   https://nuancesprog.ru/p/10529/
+    # prefetch related. select related
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)  # , context={'user': request.user, 'request': request})

@@ -14,10 +14,28 @@ class Note(models.Model):
     priority = models.IntegerField()
     owner = models.ForeignKey(User, verbose_name='Owner', on_delete=models.CASCADE, null=True)
     done_at = models.DateTimeField(null=True, blank=True)
+    location = models.CharField(max_length=1, blank=True, choices=(
+        ('H', 'Home'),
+        ('W', 'Work'),
+    ))
+    # subnotes
+    # in serializer filter subnotes by Notes?
 
     class Meta:
-        verbose_name = "All notes"
-        verbose_name_plural = "Notes"
+        verbose_name = "all current notes"
+        verbose_name_plural = "notes"
 
     def __str__(self):
         return f"Note with id{self.id}"
+
+
+class SubNote(models.Model):
+    is_done: models.BooleanField()
+    text: models.TextField()
+    from_note: models.ForeignKey(Note, verbose_name='From note', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "all current subnotes"
+
+    def __str__(self):
+        return f"Subnote with id:{self.id}"
