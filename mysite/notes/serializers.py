@@ -7,7 +7,7 @@ from .models import Note, SubNote
 
 
 #   fields of model(django doc), serializer(drf doc) and they methods
-#   methods of queryset, related() prefetch()
+#   methods of queryset, select_related prefetch_related
 #   related tables
 #   types of relationships ManyToMany, OneToMany, .......
 #   add table SubNotes { is_done: bool, text: str }
@@ -18,6 +18,8 @@ from .models import Note, SubNote
 #     if len(notes.filter(priority=priority)):
 #         raise serializers.ValidationError("Priority of notes cannot be repeated!")
 #     return priority
+
+# prefetch_related() in my case
 
 
 def text_restriction(text: str):
@@ -31,12 +33,28 @@ def text_restriction(text: str):
     return text
 
 
+class SubNoteSerializer(serializers.ModelSerializer):
+    is_done = serializers.BooleanField(default=False)
+    text = serializers.CharField()
+    # from_note = serializers.SlugRelatedField('text', queryset=Note.objects.all())
+
+    class Meta:
+        model = SubNote
+        exclude = ('from_note', )
+        # fields = "__all__"
+        # extra_kwargs = {
+        #     'is_done': {'required': False},
+        #     'text': {'required': False},
+        #     'from_note': {'validators': [text_restriction]}
+        # }
+
+
 class NoteSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
     is_done = serializers.BooleanField(required=False)
+    subnotes = SubNoteSerializer(many=True, read_only=True)    #   allow_null=True?
+    # subnotes = serializers.SlugRelatedField(many=True, slug_field='text', queryset=SubNote.objects.all(), allow_null=True)
 
-    # 1. validation by priority. not allow equal priority
-    # 2. max numbers in note.text can't be more than 2
     class Meta:
         model = Note
         fields = "__all__"

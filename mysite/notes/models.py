@@ -18,24 +18,25 @@ class Note(models.Model):
         ('H', 'Home'),
         ('W', 'Work'),
     ))
-    # subnotes
     # in serializer filter subnotes by Notes?
 
     class Meta:
-        verbose_name = "all current notes"
-        verbose_name_plural = "notes"
+        verbose_name = "note"
+        verbose_name_plural = "note"
 
     def __str__(self):
         return f"Note with id{self.id}"
 
 
 class SubNote(models.Model):
-    is_done: models.BooleanField()
-    text: models.TextField()
-    from_note: models.ForeignKey(Note, verbose_name='From note', on_delete=models.CASCADE)
+    is_done = models.BooleanField()
+    text = models.TextField()
+    from_note = models.ForeignKey(
+        Note, verbose_name='From note', on_delete=models.CASCADE, related_name='subnotes',
+    )
 
     class Meta:
-        verbose_name = "all current subnotes"
+        verbose_name = "subnote"
 
     def __str__(self):
         return f"Subnote with id:{self.id}"
