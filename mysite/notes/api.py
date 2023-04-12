@@ -10,11 +10,12 @@ from rest_framework.response import Response
 from .models import Note, SubNote
 from .permissions import DoesntDone, IsOwnerOrReadOnly
 from .serializers import NoteSerializer, FilterSerializer, SubNoteSerializer
+from .utils import query_debugger
 
 
 # Create your views here.
 class SubNoteViewSet(viewsets.ModelViewSet):
-    queryset = SubNote.objects.select_related("from_note").all()
+    queryset = SubNote.objects.select_related("from_note")
     # queryset = SubNote.objects.all()
     serializer_class = SubNoteSerializer
     # permission_classes = (AllowAny, )
@@ -24,15 +25,30 @@ class SubNoteViewSet(viewsets.ModelViewSet):
 
 
 class NoteViewSet(viewsets.ModelViewSet):
-    queryset = Note.objects.all()
-    # queryset = Note.objects.prefetch_related("subnotes").all()
+    # queryset = Note.objects.all()
+    # queryset = Note.objects.all().prefetch_related("subnotes")
+    # notes_id = [note.id for note in Note.objects.all()]
+
+    # temp = Note.objects.prefetch_related(
+    #     Prefetch("subnotes", queryset=SubNote.objects.select_related("from_note").all(), to_attr="attr_temp")
+    # )
+
+    queryset = Note.objects.prefetch_related(
+        "subnotes",
+        Prefetch("subnotes", queryset=SubNote.objects.filter(is_done=True), to_attr="doned"),
+    )
+
+
+    # temp = Note.objects.prefetch_related(
+    #     Prefetch("subnotes", queryset=SubNote.objects.filter(for_note='qwerty'))
+    # )
+    # doned_subnotes
     serializer_class = NoteSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
 
     # permission_classes = (IsAuthenticatedOrReadOnly, DoesntDone,)
+    @query_debugger
     def list(self, request, *args, **kwargs):
-        print("LIST START", len(connection.queries))
-        print("LIST START", connection.queries)
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
@@ -41,27 +57,20 @@ class NoteViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        print("LIST END", len(connection.queries))
-        print("LIST END", connection.queries)
         return Response(serializer.data)
 
     def get_queryset(self):
-        print("QS START", len(connection.queries))
-        print("QS START", connection.queries)
         assert self.queryset is not None, (
-            "'%s' should either include a `queryset` attribute, "
-            "or override the `get_queryset()` method."
-            % self.__class__.__name__
+                "'%s' should either include a `queryset` attribute, "
+                "or override the `get_queryset()` method."
+                % self.__class__.__name__
         )
 
         queryset = self.queryset
         if isinstance(queryset, QuerySet):
             # Ensure queryset is re-evaluated on each request.
             queryset = queryset.all()
-        print("QS END", len(connection.queries))
-        print("QS END", connection.queries)
         return queryset
-
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)  # , context={'user': request.user, 'request': request})

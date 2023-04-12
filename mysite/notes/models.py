@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.utils import timezone
-from datetime import datetime
 
 User = get_user_model()
 
@@ -10,7 +8,6 @@ class Note(models.Model):
     text = models.TextField(max_length=255)
     is_done = models.BooleanField(help_text='temp text', default=False)
     time = models.TimeField(null=True, blank=True)
-    # datetime = models.TimeField(default=datetime.)
     priority = models.IntegerField()
     owner = models.ForeignKey(User, verbose_name='Owner', on_delete=models.CASCADE, null=True)
     done_at = models.DateTimeField(null=True, blank=True)
@@ -18,7 +15,10 @@ class Note(models.Model):
         ('H', 'Home'),
         ('W', 'Work'),
     ))
-    # in serializer filter subnotes by Notes?
+    # how many subnote in every note. annotate method
+    # haw many undone subnotes
+    # average difficulty by difficulty of all subnotes. float?
+    # average difficulty by difficulty of all subnotes for doned. float?
 
     class Meta:
         verbose_name = "note"
@@ -34,7 +34,10 @@ class SubNote(models.Model):
     from_note = models.ForeignKey(
         Note, verbose_name='From note', on_delete=models.CASCADE, related_name='subnotes',
     )
+    # add field type Int, estimate for difficulty
+    # real difficulty(hours) int
 
+    # all in one request
     class Meta:
         verbose_name = "subnote"
 

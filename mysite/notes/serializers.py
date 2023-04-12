@@ -41,7 +41,6 @@ class SubNoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubNote
         exclude = ('from_note', )
-        # fields = "__all__"
         # extra_kwargs = {
         #     'is_done': {'required': False},
         #     'text': {'required': False},
@@ -53,6 +52,7 @@ class NoteSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
     is_done = serializers.BooleanField(required=False)
     subnotes = SubNoteSerializer(many=True, read_only=True)    #   allow_null=True?
+    doned = SubNoteSerializer(many=True, read_only=True)
     # subnotes = serializers.SlugRelatedField(many=True, slug_field='text', queryset=SubNote.objects.all(), allow_null=True)
 
     class Meta:
