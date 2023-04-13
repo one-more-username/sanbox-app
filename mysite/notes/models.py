@@ -15,9 +15,16 @@ class Note(models.Model):
         ('H', 'Home'),
         ('W', 'Work'),
     ))
+    # DONE
     # how many subnote in every note. annotate method
+    # or agregate?
+
+    # DONE
     # haw many undone subnotes
+
+    # DONE
     # average difficulty by difficulty of all subnotes. float?
+    # DONE
     # average difficulty by difficulty of all subnotes for doned. float?
 
     class Meta:
@@ -34,8 +41,14 @@ class SubNote(models.Model):
     from_note = models.ForeignKey(
         Note, verbose_name='From note', on_delete=models.CASCADE, related_name='subnotes',
     )
+    estimated_time = models.IntegerField(null=True, blank=True)
+    spent_time = models.IntegerField(null=True, blank=True)
+
+    # DONE
     # add field type Int, estimate for difficulty
-    # real difficulty(hours) int
+    # DONE
+    # real difficulty(hours) Int
+
 
     # all in one request
     class Meta:

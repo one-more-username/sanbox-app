@@ -1,10 +1,9 @@
-from django.db.models import QuerySet, Prefetch
-from django.db import connection
+from django.db.models import QuerySet, Prefetch, Count, Case, When, IntegerField, Avg
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets, serializers, status
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from .models import Note, SubNote
@@ -19,34 +18,26 @@ class SubNoteViewSet(viewsets.ModelViewSet):
     # queryset = SubNote.objects.all()
     serializer_class = SubNoteSerializer
     # permission_classes = (AllowAny, )
-    # prefetch_related. select_related
-
-    # SubNote.objects.bulk_create([SubNote(is_done=False, text='1', from_note=n) for i in range(1000)])
 
 
 class NoteViewSet(viewsets.ModelViewSet):
     # queryset = Note.objects.all()
-    # queryset = Note.objects.all().prefetch_related("subnotes")
-    # notes_id = [note.id for note in Note.objects.all()]
-
-    # temp = Note.objects.prefetch_related(
-    #     Prefetch("subnotes", queryset=SubNote.objects.select_related("from_note").all(), to_attr="attr_temp")
-    # )
-
-    queryset = Note.objects.prefetch_related(
+    queryset = Note.objects.annotate(
+        subnotes_quantity=Count("subnotes"),
+        undoned_subnotes=Count(
+            Case(When(subnotes__is_done=False, then=1), output_field=IntegerField())
+        ),
+        avg_subnotes_time_estimate=Avg("subnotes__estimated_time"),
+        avg_subnotes_time_spent=Avg("subnotes__spent_time"),
+    ).prefetch_related(
         "subnotes",
         Prefetch("subnotes", queryset=SubNote.objects.filter(is_done=True), to_attr="doned"),
+        # Prefetch("subnotes", queryset=Note.objects.annotate(subnotes_quantity=Count("subnotes")), to_attr="subnotes_quantity")
     )
-
-
-    # temp = Note.objects.prefetch_related(
-    #     Prefetch("subnotes", queryset=SubNote.objects.filter(for_note='qwerty'))
-    # )
-    # doned_subnotes
     serializer_class = NoteSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
-
     # permission_classes = (IsAuthenticatedOrReadOnly, DoesntDone,)
+
     @query_debugger
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

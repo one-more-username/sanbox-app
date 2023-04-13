@@ -41,11 +41,12 @@ class SubNoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubNote
         exclude = ('from_note', )
-        # extra_kwargs = {
-        #     'is_done': {'required': False},
-        #     'text': {'required': False},
-        #     'from_note': {'validators': [text_restriction]}
-        # }
+        extra_kwargs = {
+            'is_done': {'required': False},
+            'estimated_time': {'required': False},
+            # 'spent_time': {'required': False},
+            # 'from_note': {'validators': [text_restriction]}
+        }
 
 
 class NoteSerializer(serializers.ModelSerializer):
@@ -53,6 +54,10 @@ class NoteSerializer(serializers.ModelSerializer):
     is_done = serializers.BooleanField(required=False)
     subnotes = SubNoteSerializer(many=True, read_only=True)    #   allow_null=True?
     doned = SubNoteSerializer(many=True, read_only=True)
+    subnotes_quantity = serializers.IntegerField()
+    undoned_subnotes = serializers.IntegerField()
+    avg_subnotes_time_estimate = serializers.FloatField()
+    avg_subnotes_time_spent = serializers.FloatField()
     # subnotes = serializers.SlugRelatedField(many=True, slug_field='text', queryset=SubNote.objects.all(), allow_null=True)
 
     class Meta:
