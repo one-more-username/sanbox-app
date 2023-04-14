@@ -15,17 +15,6 @@ class Note(models.Model):
         ('H', 'Home'),
         ('W', 'Work'),
     ))
-    # DONE
-    # how many subnote in every note. annotate method
-    # or agregate?
-
-    # DONE
-    # haw many undone subnotes
-
-    # DONE
-    # average difficulty by difficulty of all subnotes. float?
-    # DONE
-    # average difficulty by difficulty of all subnotes for doned. float?
 
     class Meta:
         verbose_name = "note"
@@ -44,15 +33,30 @@ class SubNote(models.Model):
     estimated_time = models.IntegerField(null=True, blank=True)
     spent_time = models.IntegerField(null=True, blank=True)
 
-    # DONE
-    # add field type Int, estimate for difficulty
-    # DONE
-    # real difficulty(hours) Int
-
-
-    # all in one request
     class Meta:
         verbose_name = "subnote"
+        constraints = [
+            models.CheckConstraint(
+                # name="spent_time_only_for_doned",
+                name="%(class)s_spent_time_error",
+                check=(
+                    models.Q(
+                        is_done=True,
+                        spent_time__isnull=False
+                    )
+                    | models.Q(
+                        is_done=False,
+                        spent_time__isnull=True,
+                    )
+                ),
+                violation_error_message="Can't be done without spent_time"
+            ),
+        ]
+        # constraints = models.UniqueConstraint(
+        #     name="spent_time_only_for_doned",
+        #     fields=['is_done', 'spent_time'],
+        #     condition=models.Q(is_done=False, spent_time__isnull=False)
+        # ),
 
     def __str__(self):
         return f"Subnote with id:{self.id}"

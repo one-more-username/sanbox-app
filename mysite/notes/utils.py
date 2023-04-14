@@ -4,6 +4,9 @@ import time
 from django.db import reset_queries, connection
 
 
+# def fill database()
+
+
 def query_debugger(func):
     @functools.wraps(func)
     def inner_func(*args, **kwargs):

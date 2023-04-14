@@ -1,4 +1,5 @@
-from django.db.models import QuerySet, Prefetch, Count, Case, When, IntegerField, Avg
+from django.db.models import\
+    QuerySet, Prefetch, Count, Case, When, IntegerField, Avg
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status
@@ -15,24 +16,20 @@ from .utils import query_debugger
 # Create your views here.
 class SubNoteViewSet(viewsets.ModelViewSet):
     queryset = SubNote.objects.select_related("from_note")
-    # queryset = SubNote.objects.all()
     serializer_class = SubNoteSerializer
     # permission_classes = (AllowAny, )
 
 
 class NoteViewSet(viewsets.ModelViewSet):
-    # queryset = Note.objects.all()
     queryset = Note.objects.annotate(
-        subnotes_quantity=Count("subnotes"),
-        undoned_subnotes=Count(
-            Case(When(subnotes__is_done=False, then=1), output_field=IntegerField())
-        ),
+        undoned_subnotes=Count(Case(When(subnotes__is_done=False, then=1), output_field=IntegerField())),
         avg_subnotes_time_estimate=Avg("subnotes__estimated_time"),
         avg_subnotes_time_spent=Avg("subnotes__spent_time"),
     ).prefetch_related(
         "subnotes",
         Prefetch("subnotes", queryset=SubNote.objects.filter(is_done=True), to_attr="doned"),
-        # Prefetch("subnotes", queryset=Note.objects.annotate(subnotes_quantity=Count("subnotes")), to_attr="subnotes_quantity")
+    ).annotate(
+        subnotes_quantity=Count("subnotes"),
     )
     serializer_class = NoteSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
