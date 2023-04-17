@@ -4,6 +4,22 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+# new app with model for Profile
+# Profile
+#   birthdate
+#   male/female
+#   photo/avatar(downloaded). url for download file
+#
+# get_user_model.User
+#   name
+#   surname
+#   birthdate
+#   male/female
+#
+#   * in Note infinite quantity of photo
+#
+
+
 class Note(models.Model):
     text = models.TextField(max_length=255)
     is_done = models.BooleanField(help_text='temp text', default=False)
