@@ -2,13 +2,6 @@ from django.contrib import admin
 
 from .models import Note, SubNote
 
-admin.site.register(SubNote)
-
-
-class SubNoteInline(admin.TabularInline):
-    model = SubNote
-    classes = ['collapse']
-
 
 class FilterByGoodTime(admin.SimpleListFilter):
     title = 'good time'
@@ -18,14 +11,15 @@ class FilterByGoodTime(admin.SimpleListFilter):
         return [('good_time', 'good time'), ]
 
     def queryset(self, request, queryset):
-        for i in request: print("RQ", i)
-        for i in queryset: print("QS", i)
-
         if self.value() == 'good_time':
-            return queryset.filter(
-                #   filter by spent_time. return all subnotes if spent_time <= expected_tome
-                subnotes_estimated_time__lte=queryset.value()
-            )
+            for qs_item in queryset.values():
+                if qs_item['spent_time']:
+                    qs = queryset.filter(
+                        estimated_time__lte=qs_item['spent_time'],
+                        spent_time__isnull=False
+                    )
+            return qs
+
 
 class FilterByBadTime(admin.SimpleListFilter):
     title = 'bad time'
@@ -36,24 +30,34 @@ class FilterByBadTime(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'bad_time':
-            return queryset.filter(
-                #   filter by spent_time. return all subnotes if spent_time > expected_tome
-            )
+            for qs_item in queryset.values():
+                if qs_item['spent_time']:
+                    qs = queryset.filter(
+                        estimated_time__gt=qs_item['spent_time'],
+                        spent_time__isnull=False
+                    )
+            return qs
+
+
+class SubNoteInline(admin.TabularInline):
+    model = SubNote
+    classes = ['collapse']
+
+
+class AdminSubNote(admin.ModelAdmin):
+    list_filter = ('is_done', FilterByGoodTime, FilterByBadTime)
 
 
 class AdminNote(admin.ModelAdmin):
     #   InlineModelAdmin
     inlines = [SubNoteInline]
-    #   filter by spent_time. return all subnotes if spent_time > expected_tome
-    #   filter by spent_time. return all subnotes if spent_time <= expected_tome
     #
     list_display = ("id", "text", "is_done", 'time', 'priority')
     list_display_links = ("time", 'text')
     list_editable = ('is_done', 'priority')
-    list_filter = ('is_done', FilterByGoodTime)
+    list_filter = ('is_done', )
     # list_select_related = ('subnotes', )
-    ordering = ('-priority', )
-    # save_as = True
+    ordering = ('-priority',)
     search_fields = ['subnotes__text']
     # filter_vertical = ()  #   ?
     # filter_horizontal = ()    #   ?
@@ -78,4 +82,5 @@ class AdminNote(admin.ModelAdmin):
         queryset.update(is_done=False)
 
 
+admin.site.register(SubNote, AdminSubNote)
 admin.site.register(Note, AdminNote)

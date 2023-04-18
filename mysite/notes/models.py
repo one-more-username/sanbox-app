@@ -68,11 +68,6 @@ class SubNote(models.Model):
                 violation_error_message="Can't be done without spent_time"
             ),
         ]
-        # constraints = models.UniqueConstraint(
-        #     name="spent_time_only_for_doned",
-        #     fields=['is_done', 'spent_time'],
-        #     condition=models.Q(is_done=False, spent_time__isnull=False)
-        # ),
 
     def __str__(self):
         return f"Subnote with id:{self.id}"

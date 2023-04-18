@@ -32,7 +32,6 @@ ALLOWED_HOSTS = []
 # Application definition
 PROJECT_APPS = [
     "notes",
-    "auth_user",
 ]
 
 INSTALLED_APPS = [
