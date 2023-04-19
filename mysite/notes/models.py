@@ -21,16 +21,21 @@ User = get_user_model()
 
 
 class Note(models.Model):
+    class Location(models.TextChoices):
+        HOME = 'H', 'Home'
+        WORK = 'W', 'Work'
+
     text = models.TextField(max_length=255)
     is_done = models.BooleanField(help_text='temp text', default=False)
     time = models.TimeField(null=True, blank=True)
     priority = models.IntegerField()
     owner = models.ForeignKey(User, verbose_name='Owner', on_delete=models.CASCADE, null=True)
     done_at = models.DateTimeField(null=True, blank=True)
-    location = models.CharField(max_length=1, blank=True, choices=(
-        ('H', 'Home'),
-        ('W', 'Work'),
-    ))
+    location = models.CharField(max_length=1, blank=True, choices=Location.choices)
+    # location = models.CharField(max_length=1, blank=True, choices=(
+    #     ('H', 'Home'),
+    #     ('W', 'Work'),
+    # ))
 
     class Meta:
         verbose_name = "note"

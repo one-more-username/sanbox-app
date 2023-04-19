@@ -123,6 +123,26 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
+#
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# STATICFILES_DIRS = (
+    # ('global', os.path.join(BASE_DIR, 'smilesite', 'project_static')),
+    # ('admins', os.path.join(BASE_DIR, 'admins', 'static')),
+    # ('accounts', os.path.join(BASE_DIR, 'accounts', 'static')),
+    # ('mysite', os.path.join(BASE_DIR, 'mysite', 'static')),
+    # ('media', os.path.join(BASE_DIR, 'media')),
+# )
+# STATICFILES_FINDERS = (
+    # 'django.contrib.staticfiles.finders.FileSystemFinder',
+# )
+
+# Define place to save media (e.g. pictures for all the projects)
+# PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
+MEDIA_URL = '/media/'
+# MEDIA_ROOT = f'{BASE_DIR}/media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+#
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

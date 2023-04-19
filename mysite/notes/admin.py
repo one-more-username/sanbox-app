@@ -1,51 +1,12 @@
 from django.contrib import admin
 
+from .filters import FilterNoteWithSubnotes, FilterByCompletion
 from .models import Note, SubNote
-
-
-class FilterByGoodTime(admin.SimpleListFilter):
-    title = 'good time'
-    parameter_name = 'good_time'
-
-    def lookups(self, request, model_admin):
-        return [('good_time', 'good time'), ]
-
-    def queryset(self, request, queryset):
-        if self.value() == 'good_time':
-            for qs_item in queryset.values():
-                if qs_item['spent_time']:
-                    qs = queryset.filter(
-                        estimated_time__lte=qs_item['spent_time'],
-                        spent_time__isnull=False
-                    )
-            return qs
-
-
-class FilterByBadTime(admin.SimpleListFilter):
-    title = 'bad time'
-    parameter_name = 'bad_time'
-
-    def lookups(self, request, model_admin):
-        return [('bad_time', 'bad time'), ]
-
-    def queryset(self, request, queryset):
-        if self.value() == 'bad_time':
-            for qs_item in queryset.values():
-                if qs_item['spent_time']:
-                    qs = queryset.filter(
-                        estimated_time__gt=qs_item['spent_time'],
-                        spent_time__isnull=False
-                    )
-            return qs
 
 
 class SubNoteInline(admin.TabularInline):
     model = SubNote
     classes = ['collapse']
-
-
-class AdminSubNote(admin.ModelAdmin):
-    list_filter = ('is_done', FilterByGoodTime, FilterByBadTime)
 
 
 class AdminNote(admin.ModelAdmin):
@@ -55,7 +16,7 @@ class AdminNote(admin.ModelAdmin):
     list_display = ("id", "text", "is_done", 'time', 'priority')
     list_display_links = ("time", 'text')
     list_editable = ('is_done', 'priority')
-    list_filter = ('is_done', )
+    list_filter = ('is_done', FilterNoteWithSubnotes)
     # list_select_related = ('subnotes', )
     ordering = ('-priority',)
     search_fields = ['subnotes__text']
@@ -70,7 +31,6 @@ class AdminNote(admin.ModelAdmin):
             'fields': ('done_at', 'location'),
         }),
     ]
-
     actions = ['make_done', 'make_undone']
 
     @admin.action(description='Mark selected notes as doned')
@@ -80,6 +40,11 @@ class AdminNote(admin.ModelAdmin):
     @admin.action(description='Mark selected notes as undoned')
     def make_undone(self, request, queryset):
         queryset.update(is_done=False)
+
+
+class AdminSubNote(admin.ModelAdmin):
+    list_filter = ('is_done', FilterByCompletion)
+    list_display = ("id", "estimated_time", "spent_time")
 
 
 admin.site.register(SubNote, AdminSubNote)
