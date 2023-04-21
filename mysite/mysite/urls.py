@@ -22,7 +22,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from rest_framework import routers
 
-from profiles.views import profile_page
+from profiles.views import UpdateProfileView, DetailProfileView
+# from profiles.views import UserRegistrationView
+from users.views import UserListView, UserCreateView, UserChangePasswordView
+
+# from users.views import RegisterUserView
+
+# from profiles.views import profile_page
 
 router = routers.SimpleRouter()
 
@@ -36,7 +42,13 @@ urlpatterns = [
     #
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('', profile_page)
+    #
+    path('user/list/', UserListView.as_view(), name='list_all_users'),
+    path('user/create/', UserCreateView.as_view(), name='create_new_user'),
+    path('user/change_pass/', UserChangePasswordView.as_view(), name='change_user_password'),
+    #
+    path('profile/update/<int:pk>/', UpdateProfileView.as_view(), name='update_profile'),
+    path('profile/detail/<int:pk>/', DetailProfileView.as_view(), name='detail_profile'),
 ]
 
 
