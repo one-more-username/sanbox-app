@@ -1,5 +1,5 @@
 from django.db.models import\
-    QuerySet, Prefetch, Count, Case, When, IntegerField, Avg
+    Prefetch, Count, Case, When, IntegerField, Avg
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status
@@ -46,19 +46,6 @@ class NoteViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-    def get_queryset(self):
-        assert self.queryset is not None, (
-                "'%s' should either include a `queryset` attribute, "
-                "or override the `get_queryset()` method."
-                % self.__class__.__name__
-        )
-
-        queryset = self.queryset
-        if isinstance(queryset, QuerySet):
-            # Ensure queryset is re-evaluated on each request.
-            queryset = queryset.all()
-        return queryset
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)  # , context={'user': request.user, 'request': request})

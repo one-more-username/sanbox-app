@@ -1,17 +1,36 @@
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
     class Meta:
         model = User
-        fields = ['id', 'username', 'password']
+        fields = ['id', 'username', 'password', 'password2']
 
-        # fields = '__all__'
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+
+        return attrs
+
+    def create(self, validated_data):
+        # user = User.objects.create(
+        #     username=validated_data['username'],
+        # )
+        user = User(username=validated_data['username'])
+
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
 
 class PasswordSerializer(serializers.Serializer):
+    model = User
+
+    password = serializers.CharField(required=True)
     # check pass, set pass
 
     # def set_password(self, raw_password):
@@ -31,8 +50,3 @@ class PasswordSerializer(serializers.Serializer):
     #         self.save(update_fields=["password"])
     #
     #     return check_password(raw_password, self.password, setter)
-
-    pass
-    # class Meta:
-    #     model = User
-    #     fields = ['password', ]
