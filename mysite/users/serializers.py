@@ -6,11 +6,28 @@ from profiles.serializers import ProfileSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # user fields
+    first_name = serializers.CharField(default='John')
+    last_name = serializers.CharField(default='Johnson')
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
+
+    # profile fields
+    gender = serializers.CharField(max_length=1, default='M')
+    birthdate = serializers.DateField(allow_null=True)
+    profile = ProfileSerializer(write_only=True, required=False)
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'password2']
+        fields = [
+            'first_name',
+            'last_name',
+            'username',
+            'password',
+            'password2',
+            'gender',
+            'birthdate',
+            'profile'
+        ]
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -19,9 +36,6 @@ class UserSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # user = User.objects.create(
-        #     username=validated_data['username'],
-        # )
         user = User(username=validated_data['username'])
 
         user.set_password(validated_data['password'])
@@ -32,8 +46,27 @@ class UserSerializer(serializers.ModelSerializer):
 class PasswordSerializer(serializers.Serializer):
     model = User
 
-    password = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required=True)
     # check pass, set pass
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+
+        return attrs
+
+    # update
+    def create(self, validated_data):
+        user = User(username=validated_data['username'])
+
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError('`update()` must be implemented.')
+
 
     # def set_password(self, raw_password):
     #     self.password = make_password(raw_password)

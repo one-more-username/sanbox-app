@@ -1,6 +1,4 @@
 from django.db import transaction
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -24,29 +22,50 @@ class UserCreateView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.UserSerializer
 
+    # @extend_schema() for change structure of response in UserCreateView??
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        #
-        @receiver(post_save, sender=User)
-        def create_profile(sender, instance, created, **kwargs):
-            if created:
-                Profile.objects.create(user=instance)
 
-        user = User.objects.get(id=serializer.data['id'])
+        user = User(
+            first_name=request.data['first_name'],
+            last_name=request.data['last_name'],
+            username=request.data['username'],
+            password=request.data['password'],
+        )
+        # user.save()
 
-        data = {
-            "created user": serializer.data,
-            "created profile with id": user.profile.user_id
-        }
+        profile = Profile(
+            user=user,
+            gender=request.data['gender'],
+            birthdate=request.data['birthdate']
+        )
+        # profile.save()
 
-        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+        sr_user = serializers.UserSerializer(data=user)
+
+        if not sr_user.is_valid():
+            print("DATA", sr_user.initial_data)
+
+        #   return user & profile instead serializer.data
+        return Response(request.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class UserChangePasswordView(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = serializers.PasswordSerializer
+
+    # @action(detail=True, methods=['post'])
+    # def set_password(self, request, pk=None):
+    #     user = self.get_object()
+    #     serializer = PasswordSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         user.set_password(serializer.validated_data['password'])
+    #         user.save()
+    #         return Response({'status': 'password set'})
+    #     else:
+    #         return Response(serializer.errors,
+    #                         status=status.HTTP_400_BAD_REQUEST)
     # permission_classes = (IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
