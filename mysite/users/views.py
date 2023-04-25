@@ -1,5 +1,7 @@
+from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from rest_framework import generics, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -22,36 +24,26 @@ class UserCreateView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.UserSerializer
 
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     headers = self.get_success_headers(serializer.data)
-    #     #
-    #     profile = Profile.objects.get(user=request.data['id'])
-    #     # print("VALUES", request.data)
-    #     #
-    #     return Response((serializer.data, profile), status=status.HTTP_201_CREATED, headers=headers)
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        #
+        @receiver(post_save, sender=User)
+        def create_profile(sender, instance, created, **kwargs):
+            if created:
+                Profile.objects.create(user=instance)
 
-    # def perform_create(self, serializer):
-    #     data = self.request.data
-    #
-    #     if "id" not in data:
-    #         raise ValidationError({
-    #             "id": "Profile with this id doesn't exist",
-    #         })
-    #
-    #     try:
-    #         profile = Profile.objects.get(user=data["id"])
-    #     except Profile.DoesNotExist:
-    #         return Response(
-    #             'No profile with the id ({0}) found'.format(id),
-    #             status=status.HTTP_404_NOT_FOUND
-    #         )
+        user = User.objects.get(id=serializer.data['id'])
 
-        # device = serializer.save()
+        data = {
+            "created user": serializer.data,
+            "created profile with id": user.profile.user_id
+        }
 
-        # profile.devices.add(device)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class UserChangePasswordView(generics.UpdateAPIView):
