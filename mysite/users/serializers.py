@@ -6,26 +6,21 @@ from profiles.serializers import ProfileSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # user fields
+    id = serializers.IntegerField(read_only=True)
     first_name = serializers.CharField(default='John')
     last_name = serializers.CharField(default='Johnson')
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-
-    # profile fields
-    gender = serializers.CharField(max_length=1, default='M')
-    birthdate = serializers.DateField(allow_null=True)
     profile = ProfileSerializer(write_only=True, required=False)
     class Meta:
         model = User
         fields = [
+            'id',
             'first_name',
             'last_name',
             'username',
             'password',
             'password2',
-            'gender',
-            'birthdate',
             'profile'
         ]
 
@@ -56,7 +51,7 @@ class PasswordSerializer(serializers.Serializer):
 
         return attrs
 
-    # update
+    # update password
     def create(self, validated_data):
         user = User(username=validated_data['username'])
 

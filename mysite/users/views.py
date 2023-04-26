@@ -27,30 +27,25 @@ class UserCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        headers = self.get_success_headers(serializer.data)
 
         user = User(
-            first_name=request.data['first_name'],
-            last_name=request.data['last_name'],
-            username=request.data['username'],
-            password=request.data['password'],
+            first_name=serializer.validated_data['first_name'],
+            last_name=serializer.validated_data['last_name'],
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password'],
         )
-        # user.save()
+        user.save()
 
         profile = Profile(
             user=user,
-            gender=request.data['gender'],
-            birthdate=request.data['birthdate']
+            gender=serializer.validated_data['profile']['gender'],
+            birthdate=serializer.validated_data['profile']['birthdate']
         )
-        # profile.save()
+        profile.save()
+        user.refresh_from_db()
+        sr_user = serializers.UserSerializer(user)
 
-        sr_user = serializers.UserSerializer(data=user)
-
-        if not sr_user.is_valid():
-            print("DATA", sr_user.initial_data)
-
-        #   return user & profile instead serializer.data
-        return Response(request.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(sr_user.data, status=status.HTTP_201_CREATED)
 
 
 class UserChangePasswordView(generics.UpdateAPIView):
